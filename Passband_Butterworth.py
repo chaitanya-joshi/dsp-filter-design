@@ -45,14 +45,14 @@ del2 = 0.15
 # All frequencies are in kHz
 #
 # Pass band
-# Wp1 = 12.0
-# Wp2 = 22.0
+# Wp1 = 32.0
+# Wp2 = 37.0
 # # Stop band
-# Ws1 = Wp1 - 5.0
-# Ws2 = Wp2 + 5.0
+# Ws1 = Wp1 - 2.0
+# Ws2 = Wp2 + 2.0
 # # Tolerances
-# del1 = 0.250
-# del2 = 0.250
+# del1 = 0.15
+# del2 = 0.15
 #
 # Parameters for the transformation WL = (W^2 - W0^2)/(B.W)
 W0 = sqrt(Wp1*Wp2)
@@ -131,6 +131,10 @@ filtered_signal = filter(ax, ay, h)
 out_spec = fft.rfft(filtered_signal)
 # plt.plot(abs(out_spec), color='r')
 plt.plot(freq, abs(out_spec), color='r')
+plt.plot((Wp1,Wp1), (0,1), 'k-', color='green')
+plt.plot((Wp2,Wp2), (0,1), 'k-', color='green')
+plt.plot((Ws1,Ws1), (0,1), 'k-', color='black')
+plt.plot((Ws2,Ws2), (0,1), 'k-', color='black')
 plt.plot((0,50), (1-del1,1-del1), 'k-', color='green')
 plt.plot((0,50), (del2,del2), 'k-', color='black')
 plt.show()
