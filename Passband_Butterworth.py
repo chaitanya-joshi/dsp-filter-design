@@ -27,32 +27,32 @@ def filter(ax, ay, x):
 			if j>=i:
 				fac = 0.0
 			y[i] = y[i] + fac*(ax[j+1]*x[i-j-1] - ay[j+1]*y[i-j-1])
-		y[i] = (1.0/ay[0])*y[i]
+		# y[i] = (1.0/ay[0])*y[i]
 	return y
 #
+f_sampling = 100.0 # This frequency is in kHz (1000 cyles/sec)
 ### Passband Filter Specifications
-# All frequencies are in kHz
+# All frequencies are in 1000 radians/sec
 #
-f_sampling = 100.0
 # Pass band
-# Wp1 = 12.0
-# Wp2 = 22.0
+# Wp1 = 2.0*pi*12.0
+# Wp2 = 2.0*pi*22.0
 # # Stop band
-# Ws1 = Wp1 - 2.0
-# Ws2 = Wp2 + 2.0
+# Ws1 = Wp1 - 2.0*pi*2.0
+# Ws2 = Wp2 + 2.0*pi*2.0
 # # Tolerances
 # del1 = 0.15
 # del2 = 0.15
 #
 ### DUMMY SPECIFICATIONS FOR TESTING PURPOSES
-# All frequencies are in kHz
+# All frequencies are in 1000 radians/sec
 #
 # Pass band
-Wp1 = 35.0
-Wp2 = 40.0
+Wp1 = 2.0*pi*5.0
+Wp2 = 2.0*pi*10.0
 # Stop band
-Ws1 = Wp1 - 2.0
-Ws2 = Wp2 + 2.0
+Ws1 = Wp1 - 2.0*pi*2.0
+Ws2 = Wp2 + 2.0*pi*2.0
 # Tolerances
 del1 = 0.15
 del2 = 0.15
@@ -66,7 +66,7 @@ WLs1 = WL(Ws1,W0,B)
 # print 'WLs1: ', WLs1
 WLs2 = WL(Ws2,W0,B)
 # print 'WLs2: ', WLs2
-# Corresponding LPF (Low Pass Filter) specs
+# Corresponding LPF (Low Pass Filter) specs (all frequencies are in 1000 radians/sec)
 Wp = 1.0
 Ws = min(abs(WLs1),abs(WLs2))
 # print 'Ws: ', Ws
@@ -98,10 +98,7 @@ HcS = numerator/denominator
 # print 'HcS: ', HcS
 HcS_Bandpass = HcS.subs(s, transform)
 # print 'HcS_Bandpass: ', simplify(HcS_Bandpass)
-# ## Code to exit script. Used for debugging.
-# sys.exit()
-# ##
-bilinear = 2.0*(f_sampling/(2*pi))*(1.0 - x)/(1.0 + x)
+bilinear = 2.0*f_sampling*(1.0 - x)/(1.0 + x)
 Hz = HcS_Bandpass.subs(s, bilinear)
 Hz = simplify(Hz)
 Hz = cancel(Hz)
@@ -114,6 +111,9 @@ ax = list(reversed(ax)) # Reversing it so that ax[0] is coeff of order x^0
 ay = Poly(fraction(Hz)[1], x) # Separating out the denominator
 ay = ay.all_coeffs()
 ay = list(reversed(ay))
+norm_fac = ay[0]
+ax = [i/norm_fac for i in ax]
+ay = [i/norm_fac for i in ay]
 # print 'Length of ax: ', len(ax)
 # print 'Length of ay: ', len(ay)
 #
@@ -122,16 +122,17 @@ ay = list(reversed(ay))
 # print 'Coefficients of numerator: ', ay
 seq_len = 512 # 32768
 h = zeros(seq_len)
-inp_freq = 20.0
+inp_freq = 40.0 # This is in kHz (1000 cycles/sec)
 h[0] = 1.0
 # for i in xrange(seq_len):
 # 	h[i] = sin(2.0*pi*inp_freq*i/f_sampling)
+filtered_signal = filter(ax, ay, h)
 # inp_spec = fft.fft(h)
 inp_spec = abs(scipy.fft(h))
 fft_len = len(abs(inp_spec))
 print 'fft_len: ', fft_len
 # freq = zeros(fft_len)
-freq = scipy.fftpack.fftfreq(seq_len, 1.0/f_sampling)
+freq = scipy.fftpack.fftfreq(seq_len, 1.0/f_sampling) # Frequency axis will have kHz (1000 cycles/sec) unit.
 # for i in xrange(fft_len):
 # 	# freq[i] = i*(f_sampling/(2.0*pi))/seq_len
 # 	freq[i] = (i-seq_len/2)*f_sampling/(seq_len)
@@ -140,18 +141,20 @@ plt.plot(freq, abs(inp_spec), color='b')
 # pylab.plot(freqs,20*scipy.log10(FFT),'x')
 # pylab.plot(freq,inp_spec,'x--')
 # plt.show()
-filtered_signal = filter(ax, ay, h)
 # out_spec = fft.fft(filtered_signal)
 out_spec = abs(scipy.fft(filtered_signal))
 # plt.plot(abs(out_spec), color='r')
 plt.plot(freq, abs(out_spec), color='r')
 # pylab.plot(freq,out_spec,'x--')
 # plt.plot((inp_freq,inp_freq), (0,200), 'k-', color='green')
-plt.plot((Wp1,Wp1), (0,1), 'k-', color='green')
-plt.plot((Wp2,Wp2), (0,1), 'k-', color='green')
-plt.plot((Ws1,Ws1), (0,1), 'k-', color='black')
-plt.plot((Ws2,Ws2), (0,1), 'k-', color='black')
+plt.plot((Wp1/(2.0*pi),Wp1/(2.0*pi)), (0,1), 'k-', color='green')
+plt.plot((Wp2/(2.0*pi),Wp2/(2.0*pi)), (0,1), 'k-', color='green')
+plt.plot((Ws1/(2.0*pi),Ws1/(2.0*pi)), (0,1), 'k-', color='black')
+plt.plot((Ws2/(2.0*pi),Ws2/(2.0*pi)), (0,1), 'k-', color='black')
 plt.plot((0,50), (1-del1,1-del1), 'k-', color='green')
 plt.plot((0,50), (del2,del2), 'k-', color='black')
 plt.show()
 # pylab.show()
+# ## Code to exit script. Used for debugging.
+# sys.exit()
+# ##

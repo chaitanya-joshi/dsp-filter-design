@@ -25,4 +25,7 @@ from numpy import zeros, ceil, sin
 # print a[-1]
 N = 10.0
 k = ceil(N/2)
-print sin(3.14)
+ax = [1.0,2.0] # Array of size [(order of ax) + 1] with ax[0] being coeff of x^n
+ax = list(reversed(ax))
+ax = [i/2.0 for i in ax]
+print ax
