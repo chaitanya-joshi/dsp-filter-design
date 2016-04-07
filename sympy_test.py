@@ -1,4 +1,4 @@
-from numpy import zeros, ceil
+from numpy import zeros, ceil, sin
 # # from sympy import symbols, expand, Function
 # N/2from sympy import *
 # s, x = symbols('s x')
@@ -25,4 +25,4 @@ from numpy import zeros, ceil
 # print a[-1]
 N = 10.0
 k = ceil(N/2)
-print k
+print sin(3.14)
