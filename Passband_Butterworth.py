@@ -6,9 +6,9 @@ import scipy.fftpack
 import pylab
 from math import ceil
 from sympy import symbols, expand, simplify, fraction, Poly, cancel
-from random import random
-from matplotlib.pyplot import plot, show, errorbar
-import matplotlib.pylab as plt
+from sympy.plotting import plot
+# from matplotlib.pyplot import plot, show, errorbar
+# import matplotlib.pylab as plt
 import sys
 s, x = symbols('s x') # Here, x is z^(-1)
 #
@@ -48,8 +48,8 @@ f_sampling = 100.0 # This frequency is in kHz (1000 cyles/sec)
 # All frequencies are in 1000 radians/sec
 #
 # Pass band
-Wp1 = 2.0*pi*5.0
-Wp2 = 2.0*pi*10.0
+Wp1 = 2.0*pi*10.0
+Wp2 = 2.0*pi*40.0
 # Stop band
 Ws1 = Wp1 - 2.0*pi*2.0
 Ws2 = Wp2 + 2.0*pi*2.0
@@ -95,8 +95,15 @@ for m in xrange(int(n_LHP)):
 # numerator = DC*expand(pow((1.0 + x),int(N)))
 numerator = Wc**N
 HcS = numerator/denominator
+# freq_res_LPF = HcS.subs(s,1j*s)
+# plot(abs(freq_res_LPF), (s,0,100))
 # print 'HcS: ', HcS
 HcS_Bandpass = HcS.subs(s, transform)
+freq_res_BPF = HcS_Bandpass.subs(s,1j*2.0*pi*s)
+plot(abs(freq_res_BPF), (s,0,50))
+## Code to exit script. Used for debugging.
+sys.exit()
+##
 # print 'HcS_Bandpass: ', simplify(HcS_Bandpass)
 bilinear = 2.0*f_sampling*(1.0 - x)/(1.0 + x)
 Hz = HcS_Bandpass.subs(s, bilinear)
@@ -155,6 +162,3 @@ plt.plot((0,50), (1-del1,1-del1), 'k-', color='green')
 plt.plot((0,50), (del2,del2), 'k-', color='black')
 plt.show()
 # pylab.show()
-# ## Code to exit script. Used for debugging.
-# sys.exit()
-# ##
