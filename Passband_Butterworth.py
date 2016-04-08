@@ -124,6 +124,7 @@ ay = Poly(fraction(Hz)[1], x) # Separating out the denominator
 ay = ay.all_coeffs()
 ay = list(reversed(ay))
 norm_fac = ay[0]
+print 'ay[0]: ', ay[0]
 ax = [i/norm_fac for i in ax]
 ay = [i/norm_fac for i in ay]
 # print 'Length of ax: ', len(ax)

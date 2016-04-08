@@ -1,7 +1,8 @@
-from numpy import zeros, ceil, sin, floor, roots
+from numpy import zeros, ceil, sin, floor, roots, pi
 from sympy import symbols, expand, Function
 from sympy.plotting import plot
 # N/2from sympy import *
+print 2 == 2.0
 M = 4
 # print floor(0.6*M)
 test = zeros(2)
