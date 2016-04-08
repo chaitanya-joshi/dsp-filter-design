@@ -1,11 +1,24 @@
-from numpy import zeros, ceil, sin
+from numpy import zeros, ceil, sin, floor, roots
 from sympy import symbols, expand, Function
 from sympy.plotting import plot
 # N/2from sympy import *
-s, x = symbols('s x')
-expr = x**2
-expr = expr.subs(x,1j*x)
-plot(expr, (x, -5, 5))
+M = 4
+# print floor(0.6*M)
+test = zeros(2)
+# test = [0.0 + 1j*0.0, 0.0+1j*0.0]
+coeff = [1.0,1.0,1.0]
+zero = roots(coeff)
+print zero
+print zero[0].real
+test[0] = zero[0]
+print test
+# a = 2.0 + 5.0*1j
+# print a.imag
+# s, x = symbols('s x')
+# print s**1
+# expr = x**2
+# expr = expr.subs(x,1j*x)
+# plot(expr, (x, -5, 5))
 # transform = (s**2 + 1)/s
 # bilinear = (1.0 - x)/(1.0 + x)
 # expr = 1.0/(1.0 + s**2)

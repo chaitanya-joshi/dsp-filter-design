@@ -1,6 +1,6 @@
 # Design of Butterworth Pass Band Filter
 #
-from numpy import sqrt, log, zeros, sin, pi, fft
+from numpy import sqrt, log, zeros, sin, arccosh, pi, fft, polynomial, roots, complex64
 import scipy
 import scipy.fftpack
 import pylab
@@ -10,19 +10,11 @@ from sympy import symbols, expand, simplify, fraction, Poly, cancel
 from matplotlib.pyplot import plot, show, errorbar
 import matplotlib.pylab as plt
 import sys
-s, x = symbols('s x') # Here, x is z^(-1)
 #
-# Filter specifications.
-M = 4 # Filter number
-qm = floor(0.1*M)
-rm = M - 10*qm
-BLm = 4 + 0.9*qm + 2*rm
-BHm = BLm + 10
-print BLm, BHm
 #
-### Low Pass to Band Pass transformation
+### Low Pass to Band Stop transformation
 def WL(w,w0,b):
-	return (w**2 - w0**2)/(b*w)
+	return (b*w)/(w0**2 - w**2)
 #
 def filter(ax, ay, x):
 	m = len(ax)
@@ -38,37 +30,46 @@ def filter(ax, ay, x):
 		# y[i] = (1.0/ay[0])*y[i]
 	return y
 #
+# Filter specifications.
+M = 4 # Filter number
+qm = floor(0.1*M)
+rm = M - 10*qm
+BLm = 4 + 0.9*qm + 2*rm
+BHm = BLm + 10
+print 'Stop band: ' '[', BLm, ',', BHm, ']'
+s, x = symbols('s x') # Here, x is z^(-1)
+#
 f_sampling = 100.0 # This frequency is in kHz (1000 cyles/sec)
 ### Passband Filter Specifications
 # All frequencies are in 1000 radians/sec
 #
-# Pass band
-Wp1 = 2.0*pi*BLm
-Wp2 = 2.0*pi*BHm
 # Stop band
-Ws1 = Wp1 - 2.0*pi*2.0
-Ws2 = Wp2 + 2.0*pi*2.0
-# Tolerances
-del1 = 0.15
-del2 = 0.15
-#
-### DUMMY SPECIFICATIONS FOR TESTING PURPOSES
-# All frequencies are in 1000 radians/sec
-#
-# Pass band
-# Wp1 = 2.0*pi*10.0
-# Wp2 = 2.0*pi*40.0
-# # Stop band
-# Ws1 = Wp1 - 2.0*pi*2.0
-# Ws2 = Wp2 + 2.0*pi*2.0
+# Ws1 = 2.0*pi*BLm
+# Ws2 = 2.0*pi*BHm
+# # Pass band
+# Wp1 = Ws1 - 2.0*pi*2.0
+# Wp2 = Ws2 + 2.0*pi*2.0
 # # Tolerances
 # del1 = 0.15
 # del2 = 0.15
 #
+### DUMMY SPECIFICATIONS FOR TESTING PURPOSES
+# All frequencies are in 1000 radians/sec
+#
+# Stop band
+Ws1 = 2.0*pi*35
+Ws2 = 2.0*pi*40
+# Pass band
+Wp1 = Ws1 - 2.0*pi*2.0
+Wp2 = Ws2 + 2.0*pi*2.0
+# Tolerances
+del1 = 0.15
+del2 = 0.15
+#
 # Parameters for the transformation WL = (W^2 - W0^2)/(B.W)
 W0 = sqrt(Wp1*Wp2)
 B = Wp2 - Wp1
-transform = (s**2 + W0**2)/(B*s)
+transform = (B*s)/(s**2 + W0**2)
 # print transform
 WLs1 = WL(Ws1,W0,B)
 # print 'WLs1: ', WLs1
@@ -77,41 +78,59 @@ WLs2 = WL(Ws2,W0,B)
 # Corresponding LPF (Low Pass Filter) specs (all frequencies are in 1000 radians/sec)
 Wp = 1.0
 Ws = min(abs(WLs1),abs(WLs2))
-# print 'Ws: ', Ws
+print 'Ws: ', Ws
 D1 = 1.0/((1.0 -del1)**2) - 1.0
 D2 = 1.0/(del2**2) - 1.0
-N = ceil(log(D2/D1)/(2.0*log(Ws/Wp)))
+# print 'D1: ', D1, 'D2: ', D2
+# Evaluating epsilon and N for the Chebyshev LPF
+eps = sqrt(D1)
+print 'epsilon: ', eps
+N = ceil(arccosh(sqrt(D2/D1))/(arccosh(Ws/Wp)))
 print 'N: ', N
-Wc = Ws*pow(D2,-(0.5/N)) # (Ws/Wc)^2N = D2
-# Wc = round(Wc, 2)
-n_LHP = ceil(N/2)
-ki = zeros(n_LHP)
-a1 = zeros(n_LHP)
-a2 = zeros(n_LHP)
-denominator = 1.0
-for m in xrange(int(n_LHP)):
-	ki[m] = 2.0*Wc*sin((2.0*m + 1)*pi/(2.0*N))
-	# ki[m] = round(ki[m], 2)
-	# DC = DC/(1.0 + ki[m] + Wc**2)
-	# a1[m] = 2.0*(Wc**2 - 1.0)/(1.0 + ki[m] + Wc**2)
-	# a2[m] = (1.0 - ki[m] + Wc**2)/(1.0 + ki[m] + Wc**2)
-	if (2*m+1 == N):
-		denominator = expand(denominator*(s + Wc))
-	else:
-		denominator = expand(denominator*(s**2 + ki[m]*s + Wc**2))
- 	# print denominator
-# numerator = DC*expand(pow((1.0 + x),int(N)))
-numerator = Wc**N
-HcS = numerator/denominator
-# freq_res_LPF = HcS.subs(s,1j*s)
-# plot(abs(freq_res_LPF), (s,0,100))
-# print 'HcS: ', HcS
-HcS_Bandpass = HcS.subs(s, transform)
-# freq_res_BPF = HcS_Bandpass.subs(s,1j*2.0*pi*s)
-# plot(abs(freq_res_BPF), (s,0,50))
-# print 'HcS_Bandpass: ', simplify(HcS_Bandpass)
+# Defining a list [0,0,...1] of size N+1 required to generate the coefficients of Nth order Cheyshev Polynomial
+c = zeros(N+1)
+c[-1] = 1.0
+#
+TnS = polynomial.chebyshev.Chebyshev(c)
+TnS_coeff = polynomial.chebyshev.cheb2poly(TnS.coef)
+# print 'Coefficients: ', TnS_coeff
+CnW = 0.0
+for i in xrange(int(N+1)):
+	CnW = CnW + TnS_coeff[i]*(-1j*s)**i
+# HcS_sq = 1.0/(1.0 + (eps**2)*(CnW**2))
+denom_all = Poly(1.0 + (eps**2)*(CnW**2), s)
+# print denom_all
+denom_all = denom_all.all_coeffs()
+leading_coeff = denom_all[0]
+denom_all = [i/leading_coeff for i in denom_all]
+norm_fac = (leading_coeff/abs(leading_coeff))*pow(abs(leading_coeff),0.5)
+poles_all = roots(denom_all)
+poles_LHP = zeros(N,dtype=complex64)
+j = 0
+denominator_LHP = 1.0 + 0j
+for i in xrange(int(2*N)):
+	if ((poles_all[i]).real<0):
+		poles_LHP[j] = poles_all[i]
+		j = j+1
+		denominator_LHP = expand(denominator_LHP*(s-poles_all[i]))
+# print poles
+denom_poly = Poly(denominator_LHP,s)
+denom_poly = denom_poly.all_coeffs()
+denom_poly = [abs(i) for i in denom_poly]
+denominator = 0.0
+for i in xrange(len(denom_poly)):
+	denominator = expand(denominator + denom_poly[int(N-i)]*s**(i))
+# print poles_LHP
+# print denom_poly
+# denominator = simplify(denominator)
+HcS = 1.0/(norm_fac*denominator)
+# HcS = HcS.subs(s,1j*s)
+HcS_Bandstop = HcS.subs(s,transform)
+HcS_Bandstop = simplify(HcS_Bandstop)
+# HcW_Bandstop = HcS_Bandstop.subs(s,1j*2.0*pi*s)
+# plot(abs(HcW_Bandstop),(s,0,50))
 bilinear = 2.0*f_sampling*(1.0 - x)/(1.0 + x)
-Hz = HcS_Bandpass.subs(s, bilinear)
+Hz = HcS_Bandstop.subs(s, bilinear)
 Hz = simplify(Hz)
 Hz = cancel(Hz)
 # print 'Hz: ', Hz
@@ -167,6 +186,6 @@ plt.plot((0,50), (1-del1,1-del1), 'k-', color='green')
 plt.plot((0,50), (del2,del2), 'k-', color='black')
 plt.show()
 # pylab.show()
-## Code to exit script. Used for debugging.
-sys.exit()
-##
+# ## Code to exit script. Used for debugging.
+# sys.exit()
+# ##
