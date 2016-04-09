@@ -1,0 +1,141 @@
+\documentclass[12pt,a4paper]{scrartcl}
+%\documentclass{scrartcl}
+\usepackage{geometry}
+\geometry{margin=1.0in}
+% \usepackage{sans}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+%\usepackage{setspace}
+%\setstretch{1.1}
+%\onehalfspacing
+\usepackage{scrlayer-scrpage}
+\lohead{Chaitanya Joshi - 120260002}
+\rohead{Filter Design Assignment}
+\pagestyle{scrheadings}
+\setheadsepline{1pt}
+\title{ \vspace{-8ex} \Large Filter Design Assignment - Filter Number 4}
+\subtitle{Chaitanya Joshi - 120260002}
+%\author{Chaitanya Joshi}
+\date{\vspace{-7ex}}
+\begin{document}
+	\maketitle
+	\noindent
+	\section{Passband Filters}
+		Un-normalized analog filter specifications:
+		\begin{align}
+			\Omega_{p1} &= 12.0 \ \text{kHz} \\
+			\Omega_{p2} &= 22.0 \ \text{kHz} \\
+			\Omega_{s1} &= 10.0 \ \text{kHz} \\
+			\Omega_{s2} &= 24.0 \ \text{kHz} \\
+			\Delta \Omega_s &= 2.0 \ \text{kHz} \\
+			\delta_1 = \delta_2 &= 0.15
+		\end{align}
+		Normalized discrete filter specifications:
+		\begin{align}
+			\omega_{p1} &= 0.75 \\
+			\omega_{p2} &= 1.38 \\
+			\omega_{s1} &= 0.62 \\
+			\omega_{s2} &= 1.50 \\
+			\Delta \omega_s &= 0.63
+		\end{align}
+		\subsection{Monotonic IIR filter}
+			Corresponding analog filter specifications:
+			\begin{align}
+				\Omega_{p1} &= 0.39 \\
+				\Omega_{p2} &= 0.83 \\
+				\Omega_{s1} &= 0.32 \\
+				\Omega_{s2} &= 0.94 \\
+			\end{align}
+			Frequency transformation: 
+			\begin{equation}
+			s_L = \frac{s^2 + \Omega_0^2}{B s}
+			\end{equation}
+			with
+			\begin{align}
+				\Omega_0 &= 0.57 \\
+				B &= 0.43
+			\end{align}
+			Corresponding Butterworth LPF (Low Pass Filter) specs:
+			\begin{align}
+				\Omega_p &= 1.0 \\
+				\Omega_s &= 1.37
+			\end{align}
+			From which we get,
+			\begin{align}
+				N &= 8.0 \\
+				\Omega_c &= 1.07 
+			\end{align}
+		\subsection{FIR filter}
+			For the Kaiser window,
+			\begin{equation}
+				A = -20 \log_{10}(\text{min}(\delta_1, \delta_2)) = 16.48
+			\end{equation}
+			In this case, $A < 21$. Hence, $\beta = 0$. Hence, we have a rectangular window.
+			\begin{equation}
+				M = ceil\left(\frac{A - 8.0}{2.285\Delta \omega_s}\right) = 30
+			\end{equation}
+			where $ceil$ is the ceiling function.
+	\section{Band stop filters}
+		Un-normalized analog filter specifications:
+		\begin{align}
+			\Omega_{s1} &= 12.0 \ \text{kHz} \\
+			\Omega_{s2} &= 22.0 \ \text{kHz} \\
+			\Omega_{p1} &= 10.0 \ \text{kHz} \\
+			\Omega_{p2} &= 24.0 \ \text{kHz} \\
+			\Delta \Omega_s &= 2.0 \ \text{kHz} \\
+			\delta_1 = \delta_2 &= 0.15
+		\end{align}
+		Normalized discrete filter specifications:
+		\begin{align}
+			\omega_{s1} &= 0.75 \\
+			\omega_{s2} &= 1.38 \\
+			\omega_{p1} &= 0.62 \\
+			\omega_{p2} &= 1.50 \\
+		\end{align}
+		\subsection{Equiripple IIR Filter}
+			Corresponding analog filter specifications:
+			\begin{align}
+				\Omega_{s1} &= 0.39 \\
+				\Omega_{s2} &= 0.83 \\
+				\Omega_{p1} &= 0.32 \\
+				\Omega_{p2} &= 0.94 \\
+			\end{align}
+			Frequency transformation: 
+			\begin{equation}
+			s_L = \frac{B s}{s^2 + \Omega_0^2}
+			\end{equation}
+			with
+			\begin{align}
+				\Omega_0 &= 0.55 \\
+				B &= 0.61
+			\end{align}
+			% \subsection{Passband monotonic IIR filter}
+			Corresponding Chebyshev LPF (Low Pass Filter) specs:
+			\begin{align}
+				\Omega_p &= 1.0 \\
+				\Omega_s &= 1.34
+			\end{align}
+			from which we get
+			\begin{align}
+				N &= 4.0 \\
+				\epsilon &= 0.62
+			\end{align}
+		\subsection{FIR Filter}
+			The specification for the Kaiser window is same for this filter. Just the impulse response is different. Both the Kaiser windowed FIR filters have been demonstrated in the presentation.
+		% The analog low pass filter transfer function
+		% \begin{align}
+		% 	H_{analog.LPF}(s_L) &= 2.091 * (s^{10} + 6.88 s^{9} + 23.68 s^{8} + 53.41 s^{7} + 87.16 s^{6} \\
+		% 	&+ 107.36 s^{5} + 101.02 s^{4} + 71.74 s^{3} + 36.87 s^{2} + 12.42 s + 2.09)^{-1}
+		% \end{align}
+		% The corresponding band pass filter transfer function after frequency transformation:
+		% \begin{align}
+		% H_{analog.BPF}(s) &= 2.09 s^{10} * (1.04 \cdot 10^{-18} s^{20} + 4.50 \cdot 10^{-16} s^{19} + 2.06 \cdot 10^{-13} s^{18} \\
+		% &+ 5.61 \cdot 10^{-11} s^{17} + 1.46 \cdot 10^{-8} s^{16} + 2.88 \cdot 10^{-6} s^{15} \\
+		% &+ 5.33 \cdot 10^{-4} s^{14} + 0.08 s^{13} + 11.35 s^{12} + 1346.10 s^{11} \\
+		% &+ 14.93 \cdot 10^{4} s^{10} + 1.40 \cdot 10^{7} s^{9} + 1.23 \cdot 10^{9} s^{8} + 9.10 \cdot 10^{10} s^{7} \\
+		% &+ 6.29 \cdot 10^{12} s^{6} + 3.54 \cdot 10^{14} s^{5} + 1.88 \cdot 10^{16} s^{4} \\
+		% &+ 7.49 \cdot 10^{17} s^{3} + 2.87 \cdot 10^{19} s^{2} + 6.54 \cdot 10^{20} s + 1.57 \cdot 10^{22})^{-1}
+		% \end{align}
+		% The corresponding discrete system function is too long to write here. It will be shown in the demo.
+\end{document}

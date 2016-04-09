@@ -1,6 +1,6 @@
 # Design of Butterworth Pass Band Filter
 #
-from numpy import sqrt, log, zeros, sin, arccosh, pi, fft, polynomial, roots, complex64
+from numpy import sqrt, log, zeros, sin, tan, arccosh, pi, fft, polynomial, roots, complex64
 import scipy
 import scipy.fftpack
 import pylab
@@ -32,7 +32,10 @@ def filter(ax, ay, x):
 #
 # Filter specifications.
 M = 4 # Filter number
-qm = floor(0.1*M)
+if (M%10 == 0 and M>10):
+	qm = floor(0.1*M) -1
+else:
+	qm = floor(0.1*M)
 rm = M - 10*qm
 BLm = 4 + 0.9*qm + 2*rm
 BHm = BLm + 10
@@ -44,8 +47,26 @@ f_sampling = 100.0 # This frequency is in kHz (1000 cyles/sec)
 # All frequencies are in 1000 radians/sec
 #
 # Stop band
-# Ws1 = 2.0*pi*BLm
-# Ws2 = 2.0*pi*BHm
+Ws1 = BLm
+Ws2 = BHm
+# Pass band
+Wp1 = Ws1 - 2.0
+Wp2 = Ws2 + 2.0
+# Tolerances
+del1 = 0.15
+del2 = 0.15
+#
+print 'Un-normalized discrete time filter specifications: '
+print 'Wp1: ', Wp1
+print 'Wp2: ', Wp2
+print 'Ws1: ', Ws1
+print 'Ws2: ', Ws2
+### DUMMY SPECIFICATIONS FOR TESTING PURPOSES
+# All frequencies are in 1000 radians/sec
+#
+# Stop band
+# Ws1 = 2.0*pi*35
+# Ws2 = 2.0*pi*40
 # # Pass band
 # Wp1 = Ws1 - 2.0*pi*2.0
 # Wp2 = Ws2 + 2.0*pi*2.0
@@ -53,32 +74,40 @@ f_sampling = 100.0 # This frequency is in kHz (1000 cyles/sec)
 # del1 = 0.15
 # del2 = 0.15
 #
-### DUMMY SPECIFICATIONS FOR TESTING PURPOSES
-# All frequencies are in 1000 radians/sec
-#
-# Stop band
-Ws1 = 2.0*pi*35
-Ws2 = 2.0*pi*40
-# Pass band
-Wp1 = Ws1 - 2.0*pi*2.0
-Wp2 = Ws2 + 2.0*pi*2.0
-# Tolerances
-del1 = 0.15
-del2 = 0.15
-#
+# Normalizing specifications.
+wp1 = 2*pi*Wp1/f_sampling
+wp2 = 2*pi*Wp2/f_sampling
+# del_w = del_w/f_sampling
+ws1 = 2*pi*Ws1/f_sampling
+ws2 = 2*pi*Ws2/f_sampling
+print 'Corresponding Normalized discrete time filter specifications: '
+print 'wp1: ', wp1
+print 'wp2: ', wp2
+print 'ws1: ', ws1
+print 'ws2: ', ws2
+# Corresponding analog specifications
+wp1_analog = tan(wp1/2)
+wp2_analog = tan(wp2/2)
+ws1_analog = tan(ws1/2)
+ws2_analog = tan(ws2/2)
+print 'Corresponding analog filter specifications: '
+print 'wp1_analog: ', wp1_analog
+print 'wp2_analog: ', wp2_analog
+print 'ws1_analog: ', ws1_analog
+print 'ws2_analog: ', ws2_analog
 # Parameters for the transformation WL = (W^2 - W0^2)/(B.W)
-W0 = sqrt(Wp1*Wp2)
-B = Wp2 - Wp1
+W0 = sqrt(wp1_analog*wp2_analog)
+B = wp2_analog - wp1_analog
 transform = (B*s)/(s**2 + W0**2)
 # print transform
-WLs1 = WL(Ws1,W0,B)
+WLs1 = WL(ws1_analog,W0,B)
 # print 'WLs1: ', WLs1
-WLs2 = WL(Ws2,W0,B)
+WLs2 = WL(ws2_analog,W0,B)
 # print 'WLs2: ', WLs2
 # Corresponding LPF (Low Pass Filter) specs (all frequencies are in 1000 radians/sec)
 Wp = 1.0
 Ws = min(abs(WLs1),abs(WLs2))
-print 'Ws: ', Ws
+# print 'Ws: ', Ws
 D1 = 1.0/((1.0 -del1)**2) - 1.0
 D2 = 1.0/(del2**2) - 1.0
 # print 'D1: ', D1, 'D2: ', D2
@@ -87,6 +116,13 @@ eps = sqrt(D1)
 print 'epsilon: ', eps
 N = ceil(arccosh(sqrt(D2/D1))/(arccosh(Ws/Wp)))
 print 'N: ', N
+print 'Frequency transformation: ', transform
+print 'Corresponding Chebyshev LPF (Low Pass Filter) specs:'
+print 'Wp: ', Wp
+print 'Ws: ', Ws
+print 'N: ', N
+print 'W0: ', W0
+print 'B: ', B, '\n'
 # Defining a list [0,0,...1] of size N+1 required to generate the coefficients of Nth order Cheyshev Polynomial
 c = zeros(N+1)
 c[-1] = 1.0
@@ -124,16 +160,23 @@ for i in xrange(len(denom_poly)):
 # print denom_poly
 # denominator = simplify(denominator)
 HcS = 1.0/(norm_fac*denominator)
+HcS = simplify(HcS)
+print 'HcS: ', HcS
 # HcS = HcS.subs(s,1j*s)
 HcS_Bandstop = HcS.subs(s,transform)
+# ## Code to exit script. Used for debugging.
+# sys.exit()
+# ##
 HcS_Bandstop = simplify(HcS_Bandstop)
+print 'HcS_Bandstop', HcS_Bandstop
 # HcW_Bandstop = HcS_Bandstop.subs(s,1j*2.0*pi*s)
 # plot(abs(HcW_Bandstop),(s,0,50))
-bilinear = 2.0*f_sampling*(1.0 - x)/(1.0 + x)
+# bilinear = 2.0*f_sampling*(1.0 - x)/(1.0 + x)
+bilinear = (1.0 - x)/(1.0 + x)
 Hz = HcS_Bandstop.subs(s, bilinear)
 Hz = simplify(Hz)
 Hz = cancel(Hz)
-# print 'Hz: ', Hz
+print 'Hz: ', Hz
 # print 'Numerator: ', fraction(Hz)[0]
 # print 'Denominator: ', fraction(Hz)[1]
 ax = Poly(fraction(Hz)[0], x) # Separating out the numerator
@@ -178,14 +221,11 @@ out_spec = abs(scipy.fft(filtered_signal))
 plt.plot(freq, abs(out_spec), color='r')
 # pylab.plot(freq,out_spec,'x--')
 # plt.plot((inp_freq,inp_freq), (0,200), 'k-', color='green')
-plt.plot((Wp1/(2.0*pi),Wp1/(2.0*pi)), (0,1), 'k-', color='green')
-plt.plot((Wp2/(2.0*pi),Wp2/(2.0*pi)), (0,1), 'k-', color='green')
-plt.plot((Ws1/(2.0*pi),Ws1/(2.0*pi)), (0,1), 'k-', color='black')
-plt.plot((Ws2/(2.0*pi),Ws2/(2.0*pi)), (0,1), 'k-', color='black')
+plt.plot((Wp1,Wp1), (0,1), 'k-', color='green')
+plt.plot((Wp2,Wp2), (0,1), 'k-', color='green')
+plt.plot((Ws1,Ws1), (0,1), 'k-', color='black')
+plt.plot((Ws2,Ws2), (0,1), 'k-', color='black')
 plt.plot((0,50), (1-del1,1-del1), 'k-', color='green')
 plt.plot((0,50), (del2,del2), 'k-', color='black')
 plt.show()
 # pylab.show()
-# ## Code to exit script. Used for debugging.
-# sys.exit()
-# ##
